@@ -5,5 +5,8 @@ setuptools.setup(
     install_requires=[
         'discord',
         'feedparser',
+        'opencv-python',
+        'numpy',
+        'scikit-image'
     ]
 )
