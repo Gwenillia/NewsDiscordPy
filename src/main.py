@@ -4,6 +4,7 @@ import os
 import time
 import urllib.request
 import uuid
+import re
 from datetime import datetime
 
 import cv2
@@ -11,7 +12,9 @@ import discord
 import feedparser
 import numpy as np
 from discord.ext import commands, tasks
+from csv import writer
 from skimage import io
+
 
 date = time.time()
 titles = []
@@ -19,12 +22,34 @@ titles = []
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
 bot = commands.Bot(command_prefix='.')
 
+@bot.command()
+async def addRss(ctx, *args):
+    if len(args) != 3:
+        await ctx.send('Tu as mis **{} argument(s)** au lieu des **3 arguments** demandés. :sweat_smile: '.format(len(args)))
+    elif not re.fullmatch(".*[a-zA-Z0-9]", args[0]):
+        await ctx.send('Tu as mis des caractères spéciaux dans le nom : **{}**. :sweat_smile: '.format(args[0]))
+    elif not re.fullmatch(".*[0-9]", args[2]) and bot.get_channel(args[2]) == None:
+        await ctx.send('Copies l\'identifiant du channel ou tu veux mettre la news. :sweat_smile: ')
+    elif len(feedparser.parse(args[1]).entries) == 0:
+        await ctx.send('Ton flux rss **{}** ne retourne rien. :sweat_smile:'.format(args[1]))
+    else:
+        print(feedparser.parse(args[1]))
+        row_contents = [args[1], args[0], args[2]]
+
+        with open("param.csv", 'a+', newline='') as write_obj:
+            # Create a writer object from csv module
+            csv_writer = writer(write_obj)
+            # Add contents of list as last row in the csv file
+            csv_writer.writerow(row_contents)
+
+        await ctx.send('Le flux de news : **{}** a correctement été ajouté ! :100: '.format(args[0]))
+
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
     feed_multi_news_rss.start()
     print('bot is running')
-
 
 @tasks.loop(seconds=10)
 async def feed_multi_news_rss():
