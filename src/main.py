@@ -1,6 +1,9 @@
 import asyncio
 import csv
+import os
 import time
+import urllib.request
+import uuid
 
 import discord
 import feedparser
@@ -35,13 +38,23 @@ async def feed_news_rss(row):
     await asyncio.sleep(1)
 
     newsFeed = feedparser.parse(row["fluxrss"])
-    lineCount = 0
 
     for entry in reversed(newsFeed.entries):
-        lineCount = +1
 
+        uid = uuid.uuid1()
+        
         # get picture
         picnews = entry.links[1].href
+        temp_image = "temp-image" + str(uid) + ".jpg"
+
+        req = urllib.request.Request(picnews,
+                                     headers={
+                                         'User-agent':
+                                             'Mozilla/5.0 (Windows NT 5.1; rv:43.0) Gecko/20100101 Firefox/43.0'})
+
+        resp = urllib.request.urlopen(req)
+        with open(temp_image, "wb") as fd:
+            fd.write(resp.read())
 
         # parse time
         temp_time = entry.published
@@ -61,8 +74,10 @@ async def feed_news_rss(row):
         e = discord.Embed(title=entry.title, url=entry.link, description=entry.summary, color=0xff0000)
         e.set_author(name=row["name"])
         e.set_footer(text=final_time)
-        e.set_image(url=picnews)
-        await channel.send(embed=e)
+        file = discord.File(temp_image, filename=temp_image)
+        e.set_image(url="attachment://" + temp_image)
+        await channel.send(file=file, embed=e)
+        os.remove(temp_image)
 
 
 bot.run(token)
