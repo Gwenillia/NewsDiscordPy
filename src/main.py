@@ -14,13 +14,18 @@ async def on_ready():
     feed_multi_news_rss.start()
     print('bot in active')
 
-@tasks.loop(seconds=20)
+@tasks.loop(seconds=5)
 async def feed_multi_news_rss():
     with open("param.csv") as csvfile:
         reader = csv.DictReader(csvfile)
 
-        for row in reader:
-            await feed_news_rss(row)
+        tasks = []
+
+        for row in reader:        
+            task = asyncio.create_task(feed_news_rss(row))
+            tasks.append(task)
+
+        responses = await asyncio.gather(*tasks)
 
 
 async def feed_news_rss(row):
@@ -47,6 +52,6 @@ async def feed_news_rss(row):
         e.set_author(name=row["name"])
         e.set_footer(text=entry.published)
         e.set_image(url=picnews)
-        #await channel.send(embed=e)
+        await channel.send(embed=e)
 
 bot.run(token)
