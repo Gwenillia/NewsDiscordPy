@@ -7,10 +7,13 @@ import uuid
 import re
 from datetime import datetime
 
+import cv2
 import discord
 import feedparser
+import numpy as np
 from discord.ext import commands, tasks
 from csv import writer
+from skimage import io
 
 
 date = time.time()
@@ -100,17 +103,32 @@ async def feed_news_rss(row):
                                          headers={
                                              'User-agent':
                                                  'Mozilla/5.0 (Windows NT 5.1; rv:43.0) Gecko/20100101 Firefox/43.0'})
-
             resp = urllib.request.urlopen(req)
             with open(temp_image, "wb") as fd:
                 fd.write(resp.read())
 
-            # set channel
+            # get dominant color
+            img = io.imread(temp_image)
+
+            pixels = np.float32(img.reshape(-1, 3))
+
+            n_colors = 5
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 200, .1)
+            flags = cv2.KMEANS_RANDOM_CENTERS
+
+            _, labels, palette = cv2.kmeans(pixels, n_colors, None, criteria, 10, flags)
+            _, counts = np.unique(labels, return_counts=True)
+            dominant = palette[np.argmax(counts)]
+
+            hex_string_color = '0x%02x%02x%02x' % (int(dominant[0]), int(dominant[1]), int(dominant[2]))
+            hex_int_color = int(hex_string_color, 16)
+
+            # get channel
             channel = bot.get_channel(int(row["channel"]))
 
             # set embed
             e = discord.Embed()
-            e = discord.Embed(title=entry.title, url=entry.link, description=entry.summary, color=0xff0000)
+            e = discord.Embed(title=entry.title, url=entry.link, description=entry.summary, color=hex_int_color)
             e.set_author(name=row["name"])
             e.set_footer(text=article_short_date)
             file = discord.File(temp_image, filename=temp_image)
