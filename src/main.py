@@ -19,11 +19,11 @@ date = time.time()
 titles = []
 
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
-bot = commands.Bot(command_prefix='.')
+bot = commands.Bot(command_prefix='.', help_command=None)
 
 
 @bot.command()
-async def add_rss(ctx, *args):
+async def addRss(ctx, *args):
     if len(args) != 3:
         await ctx.send(
             'Tu as mis **{} argument(s)** au lieu des **3 arguments** demandés. :sweat_smile: '.format(len(args)))
@@ -43,6 +43,15 @@ async def add_rss(ctx, *args):
             csv_writer.writerow(row_contents)
 
         await ctx.send('Le flux de news : **{}** a correctement été ajouté ! :100: '.format(args[0]))
+
+
+@bot.command()
+async def help(ctx):
+    help_e = discord.Embed(description="Voici mes commandes.",
+                           color=0x0908ba)
+    help_e.add_field(name="Ajout d'un flux RSS", value="addRss [nom du flux] [lien du flux] [#channel]", inline=False)
+    help_e.add_field(name="Suppression d'un flux RSS", value="delRss [nom du flux]", inline=False)
+    await ctx.send(embed=help_e)
 
 
 @bot.event
