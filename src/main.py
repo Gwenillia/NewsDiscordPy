@@ -45,7 +45,7 @@ async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str
         row_contents = [flux_rss, rules_name, channel_id]
 
         try:
-            with open(".\\param.csv", 'a+', newline='') as write_obj:
+            with open("./param.csv", 'a+', newline='') as write_obj:
                 # Create a writer object from csv module
                 csv_writer = writer(write_obj)
                 # Add contents of list as last row in the csv file
@@ -84,12 +84,11 @@ async def help(ctx):
 @bot.command()
 async def flux(ctx):
     flux_columns_names = ['fluxrss', 'name', 'channel']
-    flux_datas = pd.read_csv('.\\param.csv', names=flux_columns_names)
+    flux_datas = pd.read_csv('./param.csv', names=flux_columns_names)
     flux_names = flux_datas.name.tolist()
     flux_names.pop(0)
     flux_channels = flux_datas.channel.tolist()
     flux_channels.pop(0)
-    print(flux_names)
 
     flux_e = discord.Embed(description="Voici la liste des flux actuellement en vigueur", color=0x2b41ff)
     for i in range(0, len(flux_names)):
@@ -111,7 +110,7 @@ async def feed_multi_news_rss():
     if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
         date = time.time()
         titles = []
-    with open(".\\param.csv") as csvfile:
+    with open("./param.csv") as csvfile:
         reader = csv.DictReader(csvfile)
 
         functions = []
@@ -201,7 +200,7 @@ def delete_row(rules_name):
     row_length = 0
     result = False
 
-    with open('.\\param.csv', 'r') as read_file:
+    with open('./src/param.csv', 'r') as read_file:
         reader = csv.reader(read_file)
 
         for row in reader:
@@ -213,7 +212,7 @@ def delete_row(rules_name):
                     lines.append(row)
 
     if row_length != len(lines):
-        with open('.\\param.csv', 'w', newline='') as write_file:
+        with open('./src/param.csv', 'w', newline='') as write_file:
             writer = csv.writer(write_file)
             writer.writerows(lines)
             result = True
