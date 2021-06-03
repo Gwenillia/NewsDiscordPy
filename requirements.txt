@@ -16,7 +16,7 @@ matplotlib==3.4.2
 multidict==5.1.0
 networkx==2.6rc1
 numpy==1.21.0rc1
-opencv-python==4.5.2.52
+opencv-python-headless==4.5.2.52
 pandas==1.2.4
 pillow==8.2.0
 pyparsing==3.0.0b2
