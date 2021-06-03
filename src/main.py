@@ -1,10 +1,11 @@
 import asyncio
 import csv
 import os
+import re
 import time
 import urllib.request
 import uuid
-import re
+from csv import writer
 from datetime import datetime
 
 import cv2
@@ -12,9 +13,7 @@ import discord
 import feedparser
 import numpy as np
 from discord.ext import commands, tasks
-from csv import writer
 from skimage import io
-
 
 date = time.time()
 titles = []
@@ -22,18 +21,19 @@ titles = []
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
 bot = commands.Bot(command_prefix='.')
 
+
 @bot.command()
-async def addRss(ctx, *args):
+async def add_rss(ctx, *args):
     if len(args) != 3:
-        await ctx.send('Tu as mis **{} argument(s)** au lieu des **3 arguments** demandés. :sweat_smile: '.format(len(args)))
+        await ctx.send(
+            'Tu as mis **{} argument(s)** au lieu des **3 arguments** demandés. :sweat_smile: '.format(len(args)))
     elif not re.fullmatch(".*[a-zA-Z0-9]", args[0]):
         await ctx.send('Tu as mis des caractères spéciaux dans le nom : **{}**. :sweat_smile: '.format(args[0]))
-    elif not re.fullmatch(".*[0-9]", args[2]) and bot.get_channel(args[2]) == None:
+    elif not re.fullmatch(".*[0-9]", args[2]) and bot.get_channel(args[2]) is None:
         await ctx.send('Copies l\'identifiant du channel ou tu veux mettre la news. :sweat_smile: ')
     elif len(feedparser.parse(args[1]).entries) == 0:
         await ctx.send('Ton flux rss **{}** ne retourne rien. :sweat_smile:'.format(args[1]))
     else:
-        print(feedparser.parse(args[1]))
         row_contents = [args[1], args[0], args[2]]
 
         with open("param.csv", 'a+', newline='') as write_obj:
@@ -51,31 +51,31 @@ async def on_ready():
     feed_multi_news_rss.start()
     print('bot is running')
 
+
 @tasks.loop(seconds=10)
 async def feed_multi_news_rss():
     global date
     global titles
     if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
-        print(date)
         date = time.time()
         titles = []
     with open("param.csv") as csvfile:
         reader = csv.DictReader(csvfile)
 
-        tasks = []
+        functions = []
 
         for row in reader:
-            task = asyncio.create_task(feed_news_rss(row))
-            tasks.append(task)
+            function = asyncio.create_task(feed_news_rss(row))
+            functions.append(function)
 
-        responses = await asyncio.gather(*tasks)
+        responses = await asyncio.gather(*functions)
 
 
 async def feed_news_rss(row):
     await asyncio.sleep(1)
 
-    newsFeed = feedparser.parse(row["fluxrss"])
-    for entry in reversed(newsFeed.entries):
+    news_feed = feedparser.parse(row["fluxrss"])
+    for entry in reversed(news_feed.entries):
         uid = uuid.uuid1()
 
         # parse time
@@ -127,7 +127,6 @@ async def feed_news_rss(row):
             channel = bot.get_channel(int(row["channel"]))
 
             # set embed
-            e = discord.Embed()
             e = discord.Embed(title=entry.title, url=entry.link, description=entry.summary, color=hex_int_color)
             e.set_author(name=row["name"])
             e.set_footer(text=article_short_date)
