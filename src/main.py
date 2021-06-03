@@ -12,6 +12,7 @@ import cv2
 import discord
 import feedparser
 import numpy as np
+import pandas as pd
 from discord.ext import commands, tasks
 from skimage import io
 
@@ -21,18 +22,19 @@ titles = []
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
 bot = commands.Bot(command_prefix='.', help_command=None)
 
+
 @bot.command()
-async def addRss(ctx, rules_name:str = None, flux_rss:str  = None, channel:str = None):
-    if  (rules_name == None and flux_rss == None and channel == None):
+async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
+    if (rules_name == None and flux_rss == None and channel == None):
         await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
 
     try:
-        channel_id = int(channel[2:len(channel)-1])
+        channel_id = int(channel[2:len(channel) - 1])
     except ValueError:
         await ctx.send('Un problème est survenue avec le channel **{}**. :sob:'.format(channel))
         return
-    
+
     if not re.fullmatch(".*[a-zA-Z0-9]", rules_name):
         await ctx.send('Tu as mis des caractères spéciaux dans le nom : **{}**. :sweat_smile:'.format(rules_name))
     elif bot.get_channel(channel_id) is None:
@@ -53,9 +55,10 @@ async def addRss(ctx, rules_name:str = None, flux_rss:str  = None, channel:str =
         except ValueError:
             await ctx.send('Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:')
 
+
 @bot.command()
-async def delRss(ctx, rules_name:str = None):
-    if(rules_name == None):
+async def delRss(ctx, rules_name: str = None):
+    if (rules_name == None):
         await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
 
@@ -75,7 +78,7 @@ async def delRss(ctx, rules_name:str = None):
         with open('param.csv', 'w', newline='') as writeFile:
             writer = csv.writer(writeFile)
             writer.writerows(lines)
-            
+
             await ctx.send('Le flux de news : **{}** a correctement été supprimé ! :100:'.format(rules_name))
     except ValueError:
         await ctx.send('Une erreur s\'est produite lors de la suppression du flux rss. Désolé :sob:')
@@ -84,16 +87,34 @@ async def delRss(ctx, rules_name:str = None):
 @bot.command()
 async def help(ctx):
     help_e = discord.Embed(description="Voici mes commandes.",
-                           color=0x0908ba)
+                           color=0x2b41ff)
     help_e.add_field(name="Ajout d'un flux RSS", value="addRss [nom du flux] [lien du flux] [#channel]", inline=False)
     help_e.add_field(name="Suppression d'un flux RSS", value="delRss [nom du flux]", inline=False)
     await ctx.send(embed=help_e)
+
+
+@bot.command()
+async def flux(ctx):
+    flux_columns_names = ['fluxrss', 'name', 'channel']
+    flux_datas = pd.read_csv('param.csv', names=flux_columns_names)
+    flux_names = flux_datas.name.tolist()
+    flux_names.pop(0)
+    flux_channels = flux_datas.channel.tolist()
+    flux_channels.pop(0)
+    print(flux_names)
+
+    flux_e = discord.Embed(description="Voici la liste des flux actuellement en vigueur", color=0x2b41ff)
+    for i in range(0, len(flux_names)):
+        flux_e.add_field(name=flux_names[i], value="<#{}>".format(flux_channels[i]), inline=False)
+    await ctx.send(embed=flux_e)
+
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
     feed_multi_news_rss.start()
     print('bot is running')
+
 
 @tasks.loop(seconds=10)
 async def feed_multi_news_rss():
@@ -112,6 +133,7 @@ async def feed_multi_news_rss():
             functions.append(function)
 
         responses = await asyncio.gather(*functions)
+
 
 async def feed_news_rss(row):
     await asyncio.sleep(1)
@@ -176,5 +198,6 @@ async def feed_news_rss(row):
             e.set_image(url="attachment://" + temp_image)
             await channel.send(file=file, embed=e)
             os.remove(temp_image)
+
 
 bot.run(token)
