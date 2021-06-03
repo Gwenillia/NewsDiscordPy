@@ -21,28 +21,63 @@ titles = []
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
 bot = commands.Bot(command_prefix='.')
 
+@bot.command()
+async def addRss(ctx, rules_name:str, flux_rss:str, channel:str):
+    if  (rules_name == "" and flux_rss == "" and channel == ""):
+        await ctx.send('Il manque des arguments. Command **.help**  :sweat_smile:')
+        return
+
+    try:
+        channel_id = int(channel[2:len(channel)-1])
+    except ValueError:
+        await ctx.send('Un problème est survenue avec le channel **{}**. :sob:'.format(channel))
+        return
+    
+    if not re.fullmatch(".*[a-zA-Z0-9]", rules_name):
+        await ctx.send('Tu as mis des caractères spéciaux dans le nom : **{}**. :sweat_smile:'.format(rules_name))
+    elif bot.get_channel(channel_id) is None:
+        await ctx.send('Tu as mis un **channel non valide**. :sweat_smile:')
+    elif len(feedparser.parse(flux_rss).entries) == 0:
+        await ctx.send('Ton flux rss **{}** ne retourne rien. :sweat_smile:'.format(flux_rss))
+    else:
+        row_contents = [flux_rss, rules_name, channel_id]
+
+        try:
+            with open("param.csv", 'a+', newline='') as write_obj:
+                # Create a writer object from csv module
+                csv_writer = writer(write_obj)
+                # Add contents of list as last row in the csv file
+                csv_writer.writerow(row_contents)
+
+            await ctx.send('Le flux de news : **{}** a correctement été ajouté ! :100:'.format(rules_name))
+        except ValueError:
+            await ctx.send('Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:')
+
+
+
 
 @bot.command()
-async def add_rss(ctx, *args):
-    if len(args) != 3:
-        await ctx.send(
-            'Tu as mis **{} argument(s)** au lieu des **3 arguments** demandés. :sweat_smile: '.format(len(args)))
-    elif not re.fullmatch(".*[a-zA-Z0-9]", args[0]):
-        await ctx.send('Tu as mis des caractères spéciaux dans le nom : **{}**. :sweat_smile: '.format(args[0]))
-    elif not re.fullmatch(".*[0-9]", args[2]) and bot.get_channel(args[2]) is None:
-        await ctx.send('Copies l\'identifiant du channel ou tu veux mettre la news. :sweat_smile: ')
-    elif len(feedparser.parse(args[1]).entries) == 0:
-        await ctx.send('Ton flux rss **{}** ne retourne rien. :sweat_smile:'.format(args[1]))
-    else:
-        row_contents = [args[1], args[0], args[2]]
+async def delRss(ctx, rules_name:str):
+    if(rules_name == ""):
+        await ctx.send('Il manque des arguments. Command **.help**  :sweat_smile:')
+        return
 
-        with open("param.csv", 'a+', newline='') as write_obj:
-            # Create a writer object from csv module
-            csv_writer = writer(write_obj)
-            # Add contents of list as last row in the csv file
-            csv_writer.writerow(row_contents)
+    try:
+        lines = list()
+        with open('param.csv', 'r') as readFile:
+            reader = csv.reader(readFile)
+            for row in reader:
+                if rules_name != row[1]:
+                    lines.append(row)
 
-        await ctx.send('Le flux de news : **{}** a correctement été ajouté ! :100: '.format(args[0]))
+        with open('param.csv', 'w', newline='') as writeFile:
+            writer = csv.writer(writeFile)
+            await ctx.send(lines)
+            writer.writerows(lines)
+            
+            await ctx.send('Le flux de news : **{}** a correctement été supprimé ! :100:'.format(rules_name))
+    except ValueError:
+        await ctx.send('Une erreur s\'est produite lors de la suppression du flux rss. Désolé :sob:')
 
 
 @bot.event
