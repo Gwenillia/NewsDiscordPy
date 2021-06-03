@@ -6,6 +6,7 @@ setuptools.setup(
         'discord',
         'feedparser',
         'opencv-python',
+        'opencv-python-headless',
         'numpy',
         'scikit-image'
     ]

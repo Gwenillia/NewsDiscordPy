@@ -2,7 +2,6 @@ import asyncio
 import csv
 import os
 import re
-from sqlite3 import threadsafety
 import time
 import urllib.request
 import uuid
