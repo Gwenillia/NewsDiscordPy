@@ -2,6 +2,7 @@ import asyncio
 import csv
 import os
 import re
+from sqlite3 import threadsafety
 import time
 import urllib.request
 import uuid
@@ -63,23 +64,11 @@ async def delRss(ctx, rules_name: str = None):
         return
 
     try:
-        lines = list()
-        first_line = 1
-        with open('param.csv', 'r') as readFile:
-            reader = csv.reader(readFile)
-            for row in reader:
-                if first_line == 1:
-                    lines.append(row)
-                    first_line = 0
-                else:
-                    if rules_name != row[1]:
-                        lines.append(row)
-
-        with open('param.csv', 'w', newline='') as writeFile:
-            writer = csv.writer(writeFile)
-            writer.writerows(lines)
-
-            await ctx.send('Le flux de news : **{}** a correctement été supprimé ! :100:'.format(rules_name))
+        if delete_row(rules_name) == False:
+            await ctx.send('Le flux de news : **{}** n\'a pu être supprimé ! :sweat_smile:'.format(rules_name))
+            return
+                
+        await ctx.send('Le flux de news : **{}** a correctement été supprimé ! :100:'.format(rules_name))
     except ValueError:
         await ctx.send('Une erreur s\'est produite lors de la suppression du flux rss. Désolé :sob:')
 
@@ -190,14 +179,47 @@ async def feed_news_rss(row):
             # get channel
             channel = bot.get_channel(int(row["channel"]))
 
+            # delete flux if channel don't exist
+            if channel is None:
+                delete_row(row["name"])
+                return
+
+            # set summary
+            summary = re.sub("<.*?>", "", entry.summary)
+
             # set embed
-            e = discord.Embed(title=entry.title, url=entry.link, description=entry.summary, color=hex_int_color)
+            e = discord.Embed(title=entry.title, url=entry.link, description=summary, color=hex_int_color)
             e.set_author(name=row["name"])
             e.set_footer(text=article_short_date)
             file = discord.File(temp_image, filename=temp_image)
             e.set_image(url="attachment://" + temp_image)
             await channel.send(file=file, embed=e)
             os.remove(temp_image)
+
+
+def delete_row(rules_name):
+    lines = list()
+    row_length = 0
+    result = False
+
+    with open('param.csv', 'r') as read_file:
+        reader = csv.reader(read_file)
+
+        for row in reader:
+            row_length += 1
+            if row_length == 1:
+                lines.append(row)
+            else:
+                if str.lower(rules_name) != str.lower(row[1]):
+                    lines.append(row)
+
+    if row_length != len(lines):
+        with open('param.csv', 'w', newline='') as write_file:
+            writer = csv.writer(write_file)
+            writer.writerows(lines)
+            result = True
+
+    return result
 
 
 bot.run(token)
