@@ -22,9 +22,9 @@ token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
 bot = commands.Bot(command_prefix='.', help_command=None)
 
 @bot.command()
-async def addRss(ctx, rules_name:str, flux_rss:str, channel:str):
-    if  (rules_name == "" and flux_rss == "" and channel == ""):
-        await ctx.send('Il manque des arguments. Command **.help**  :sweat_smile:')
+async def addRss(ctx, rules_name:str = None, flux_rss:str  = None, channel:str = None):
+    if  (rules_name == None and flux_rss == None and channel == None):
+        await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
 
     try:
@@ -54,22 +54,26 @@ async def addRss(ctx, rules_name:str, flux_rss:str, channel:str):
             await ctx.send('Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:')
 
 @bot.command()
-async def delRss(ctx, rules_name:str):
-    if(rules_name == ""):
-        await ctx.send('Il manque des arguments. Command **.help**  :sweat_smile:')
+async def delRss(ctx, rules_name:str = None):
+    if(rules_name == None):
+        await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
 
     try:
         lines = list()
+        first_line = 1
         with open('param.csv', 'r') as readFile:
             reader = csv.reader(readFile)
             for row in reader:
-                if rules_name != row[1]:
+                if first_line == 1:
                     lines.append(row)
+                    first_line = 0
+                else:
+                    if rules_name != row[1]:
+                        lines.append(row)
 
         with open('param.csv', 'w', newline='') as writeFile:
             writer = csv.writer(writeFile)
-            await ctx.send(lines)
             writer.writerows(lines)
             
             await ctx.send('Le flux de news : **{}** a correctement été supprimé ! :100:'.format(rules_name))
