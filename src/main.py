@@ -19,7 +19,7 @@ date = time.time()
 titles = []
 
 token = 'NDk1NzUwMDcxNjI4MDcwOTEy.W7AVOw.pIcPHMzRQCYzVfP_Ahhu2IlcRJI'
-bot = commands.Bot(command_prefix='.')
+bot = commands.Bot(command_prefix='.', help_command=None)
 
 @bot.command()
 async def addRss(ctx, rules_name:str, flux_rss:str, channel:str):
@@ -53,9 +53,6 @@ async def addRss(ctx, rules_name:str, flux_rss:str, channel:str):
         except ValueError:
             await ctx.send('Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:')
 
-
-
-
 @bot.command()
 async def delRss(ctx, rules_name:str):
     if(rules_name == ""):
@@ -80,12 +77,19 @@ async def delRss(ctx, rules_name:str):
         await ctx.send('Une erreur s\'est produite lors de la suppression du flux rss. Désolé :sob:')
 
 
+@bot.command()
+async def help(ctx):
+    help_e = discord.Embed(description="Voici mes commandes.",
+                           color=0x0908ba)
+    help_e.add_field(name="Ajout d'un flux RSS", value="addRss [nom du flux] [lien du flux] [#channel]", inline=False)
+    help_e.add_field(name="Suppression d'un flux RSS", value="delRss [nom du flux]", inline=False)
+    await ctx.send(embed=help_e)
+
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
     feed_multi_news_rss.start()
     print('bot is running')
-
 
 @tasks.loop(seconds=10)
 async def feed_multi_news_rss():
@@ -104,7 +108,6 @@ async def feed_multi_news_rss():
             functions.append(function)
 
         responses = await asyncio.gather(*functions)
-
 
 async def feed_news_rss(row):
     await asyncio.sleep(1)
@@ -169,6 +172,5 @@ async def feed_news_rss(row):
             e.set_image(url="attachment://" + temp_image)
             await channel.send(file=file, embed=e)
             os.remove(temp_image)
-
 
 bot.run(token)
