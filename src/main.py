@@ -2,6 +2,7 @@ import asyncio
 import csv
 import os
 import re
+import ssl
 import time
 import urllib.request
 import uuid
@@ -25,6 +26,12 @@ bot = commands.Bot(command_prefix='.', help_command=None)
 
 @bot.command()
 async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
     if (rules_name == None and flux_rss == None and channel == None):
         await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
