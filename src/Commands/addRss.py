@@ -1,16 +1,21 @@
 import re
 import ssl
+
 import defs as func
+from datetime import time
 
 import feedparser
-
 from consts import *
 
 
 @bot.command()
 async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
-    # Monkeypatching certificat
+
+    global date
+    date = time.time()
+
     try:
+        # Monkeypatching certificat
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
         pass

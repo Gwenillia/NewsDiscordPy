@@ -6,16 +6,21 @@ import re
 import urllib.request
 import uuid
 
+# import opencv-python-headless for cv2
 import cv2
+import dateutil.parser
 import discord
 import feedparser
 import numpy as np
 from skimage import io
 
+# next import is necessary for commands to work
 from Commands import addRss, delRss, flux, help, reload
+
 from consts import *
 
 token = 'ODUwMjgxMjQ2ODU2OTcwMjUw.YLncHg.SlDj5xJfnbjauYt23TbXZBjdb_Y'
+
 
 async def feed_news_rss(row):
     await asyncio.sleep(1)
@@ -24,14 +29,14 @@ async def feed_news_rss(row):
     for entry in reversed(news_feed.entries):
         uid = uuid.uuid1()
         temp_image = TEMP_IMG.format(str(uid))
+
         # parse time
-        raw_article_date = entry.published
+        article_date_str = entry.published
+        article_date_pdt = dateutil.parser.parse(article_date_str, tzinfos=TZINFOS)
+        article_date_utc = article_date_pdt.astimezone(pytz.utc)
 
-        article_detailed_date = try_parsing_date(raw_article_date)
-
-        article_short_date = time.strftime("%d/%m/%Y à %Hh%M", article_detailed_date)
-
-        article_timestamp = time.mktime(article_detailed_date)
+        article_short_date = time.strftime("%d/%m/%Y à %Hh%M", article_date_utc.timetuple())
+        article_timestamp = time.mktime(article_date_utc.timetuple())
 
         if (date > article_timestamp) and (entry.title in titles):
             pass
@@ -85,16 +90,6 @@ async def feed_news_rss(row):
             e.set_image(url="attachment://" + temp_image)
             await channel.send(file=file, embed=e)
             os.remove(temp_image)
-
-
-def try_parsing_date(parsed_date):
-    parsed_date = parsed_date.replace('PDT', '+0700')
-    for f in ("%a, %d %b %Y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S %Z"):
-        try:
-            return time.strptime(parsed_date, f)
-        except ValueError:
-            pass
-    raise ValueError('Format de date Invalide' + parsed_date)
 
 
 def delete_row(rules_name):
