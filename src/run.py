@@ -28,6 +28,8 @@ def run():
                 function = asyncio.create_task(feed_news_rss(row))
                 functions.append(function)
 
+            await asyncio.gather(*functions)
+
     bot.run(token)
 
 
