@@ -1,6 +1,7 @@
 import re
 import ssl
-from csv import writer
+
+import defs as func
 from datetime import time
 
 import feedparser
@@ -9,14 +10,18 @@ from consts import *
 
 @bot.command()
 async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
+
     global date
     date = time.time()
+
     try:
+        # Monkeypatching certificat
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:
         pass
     else:
         ssl._create_default_https_context = _create_unverified_https_context
+
     if rules_name is None and flux_rss is None and channel is None:
         await ctx.send('Il manque des arguments. Commande **help**  :sweat_smile:')
         return
@@ -34,15 +39,17 @@ async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str
     elif len(feedparser.parse(flux_rss).entries) == 0:
         await ctx.send('Ton flux rss **{}** ne retourne rien. :sweat_smile:'.format(flux_rss))
     else:
-        row_contents = [flux_rss, rules_name, channel_id]
+        row_contents = {
+            "fluxrss": flux_rss,
+            "name": rules_name,
+            "channel": channel_id
+            }
 
         try:
-            with open(CSV_PARAM, 'a+', newline='') as write_obj:
-                # Create a writer object from csv module
-                csv_writer = writer(write_obj)
-                # Add contents of list as last row in the csv file
-                csv_writer.writerow(row_contents)
+            PARAM_CSV.append(row_contents)
+            func.write_param_csv()         
 
             await ctx.send('Le flux de news : **{}** a correctement été ajouté ! :100:'.format(rules_name))
         except ValueError:
+            PARAM_CSV.remove(row_contents)
             await ctx.send('Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:')
