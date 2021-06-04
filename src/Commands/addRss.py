@@ -1,14 +1,15 @@
 import re
 import ssl
 from csv import writer
+from datetime import time
 
 import feedparser
-
 from consts import *
 
 
 @bot.command()
 async def addRss(ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
+    global date = time.time()
     try:
         _create_unverified_https_context = ssl._create_unverified_context
     except AttributeError:

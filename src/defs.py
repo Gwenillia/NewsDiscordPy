@@ -5,16 +5,18 @@ import re
 import urllib.request
 import uuid
 
+# import opencv-python-headless for cv2
 import cv2
 import discord
 import feedparser
 import numpy as np
 from skimage import io
 
-from Commands import addRss, delRss, flux, help
+# next import is necessary for commands to work
 from consts import *
 
 token = 'ODUwMjgxMjQ2ODU2OTcwMjUw.YLncHg.SlDj5xJfnbjauYt23TbXZBjdb_Y'
+
 
 async def feed_news_rss(row):
     await asyncio.sleep(1)
@@ -93,7 +95,7 @@ def try_parsing_date(parsed_date):
             return time.strptime(parsed_date, f)
         except ValueError:
             pass
-    raise ValueError('Format de date Invalide' + parsed_date)
+    raise ValueError('Format de date Invalide ' + parsed_date)
 
 
 def delete_row(rules_name):
