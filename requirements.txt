@@ -34,3 +34,7 @@ typing-extensions==3.10.0.0
 urllib3==1.26.5
 webcolors==1.11.1
 yarl==1.6.3
+
+opencv-python~=4.5.2.52
+python-dotenv~=0.17.1
+setuptools~=56.0.0

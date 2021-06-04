@@ -1,7 +1,11 @@
 import time
+from dotenv import load_dotenv
+import os
 
 import pytz
 from discord.ext import commands
+
+load_dotenv()
 
 CSV_PARAM = "./param.csv"
 date = time.time()
@@ -15,3 +19,4 @@ TZINFOS = {
     'PDT': pytz.timezone('US/Pacific'),
     '+0200': pytz.timezone('Africa/Cairo')
 }
+TOKEN = os.getenv("DISCORD_TOKEN")

@@ -4,6 +4,7 @@ from discord.ext import tasks
 
 from defs import *
 
+
 def run():
     @bot.event
     async def on_ready():
@@ -29,7 +30,7 @@ def run():
 
         await asyncio.gather(*functions)
 
-    bot.run(token)
+    bot.run(TOKEN)
 
 
 if __name__ == '__main__':

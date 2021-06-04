@@ -8,5 +8,6 @@ setuptools.setup(
         'opencv-python-headless',
         'numpy',
         'scikit-image',
+        'python-dotenv'
     ]
 )

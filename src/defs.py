@@ -19,9 +19,6 @@ from Commands import addRss, delRss, flux, help, reload
 
 from consts import *
 
-token = 'ODUwMjgxMjQ2ODU2OTcwMjUw.YLncHg.SlDj5xJfnbjauYt23TbXZBjdb_Y'
-
-
 async def feed_news_rss(row):
     await asyncio.sleep(1)
 
@@ -125,7 +122,6 @@ def load_param_csv():
     raise ValueError('Impossible de lire le fichier csv {}'.format(CSV_PARAM))
 
 def write_param_csv():
-    print(PARAM_CSV)
     with open(CSV_PARAM, 'w', newline='') as write_file:
         # Create a writer object from csv module
         writer = csv.DictWriter(write_file, fieldnames=FIELD_NAMES)
