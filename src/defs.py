@@ -2,6 +2,7 @@ import asyncio
 import csv
 import os
 import re
+
 import urllib.request
 import uuid
 
@@ -11,7 +12,7 @@ import feedparser
 import numpy as np
 from skimage import io
 
-from Commands import addRss, delRss, flux, help
+from Commands import addRss, delRss, flux, help, reload
 from consts import *
 
 token = 'ODUwMjgxMjQ2ODU2OTcwMjUw.YLncHg.SlDj5xJfnbjauYt23TbXZBjdb_Y'
@@ -97,25 +98,43 @@ def try_parsing_date(parsed_date):
 
 
 def delete_row(rules_name):
-    lines = list()
+    line_deleted = None
     row_length = 0
     result = False
 
-    with open(CSV_PARAM, 'r') as read_file:
-        reader = csv.reader(read_file)
+    for param in PARAM_CSV:
+        if rules_name == param["name"]:
+            line_deleted = param
 
-        for row in reader:
-            row_length += 1
-            if row_length == 1:
-                lines.append(row)
-            else:
-                if str.lower(rules_name) != str.lower(row[1]):
-                    lines.append(row)
-
-    if row_length != len(lines):
-        with open(CSV_PARAM, 'w', newline='') as write_file:
-            writer = csv.writer(write_file)
-            writer.writerows(lines)
-            result = True
+    if line_deleted is not None:
+        PARAM_CSV.remove(line_deleted)
+        write_param_csv()
+        result = True
 
     return result
+
+
+def load_param_csv():
+    try:
+        with open(CSV_PARAM, 'r') as read_file:
+            reader = csv.DictReader(read_file)
+            FIELD_NAMES.clear()
+            FIELD_NAMES.extend(reader.fieldnames)
+            for row in reader:
+                PARAM_CSV.append(row)
+
+            print("CSV Files has been loaded correctly")
+        return
+    except ValueError:
+        pass
+    raise ValueError('Impossible de lire le fichier csv {}'.format(CSV_PARAM))
+
+def write_param_csv():
+    print(PARAM_CSV)
+    with open(CSV_PARAM, 'w', newline='') as write_file:
+        # Create a writer object from csv module
+        writer = csv.DictWriter(write_file, fieldnames=FIELD_NAMES)
+        # Add fieldnames as header
+        writer.writeheader()
+        # Add contents of list as last row in the csv file
+        writer.writerows(PARAM_CSV)
