@@ -9,5 +9,6 @@ setuptools.setup(
         'numpy',
         'scikit-image',
         'python-dotenv'
+        'pytz'
     ]
 )
