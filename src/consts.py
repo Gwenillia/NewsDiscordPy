@@ -7,6 +7,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+COGS = [
+    'cogs.help',
+    'cogs.ping',
+    'cogs.flux.add_rss',
+    'cogs.flux.del_rss',
+    'cogs.flux.flux',
+    'cogs.flux.reload',
+]
+
 CSV_PARAM = "./param.csv"
 date = time.time()
 titles = []

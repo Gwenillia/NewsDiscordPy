@@ -1,16 +1,16 @@
 from defs import *
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        try:
-            bot.load_extension(f'cogs.{filename[:-3]}')
-            print(f'cogs.{filename[:-3]}')
-        except ImportError:
-            print(f'Unable to load {filename[:-3]}')
-
 
 @bot.event
 async def on_ready():
+    for cog in COGS:
+        try:
+            bot.load_extension(cog)
+        except Exception:
+            print(f'Unable to load {cog}')
+        else:
+            print(f'{cog}Extensions loaded')
+
     load_param_csv()
     await bot.change_presence(
         activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
@@ -18,4 +18,5 @@ async def on_ready():
     print(f'{bot.user.name} is running on {len(bot.guilds)} guild')
 
 
-bot.run(TOKEN, bot=True, reconnect=True)
+if __name__ == '__main__':
+    bot.run(TOKEN, bot=True, reconnect=True)

@@ -65,9 +65,9 @@ async def feed_news_rss(row):
         article_short_date = time.strftime("%d/%m/%Y à %Hh%M", article_date_utc.timetuple())
         article_timestamp = time.mktime(article_date_utc.timetuple())
 
-        if (date < article_timestamp) and (entry.title in titles):
+        if (date > article_timestamp) and (entry.title in titles):
             pass
-        elif (date > article_timestamp) and (entry.title not in titles):
+        elif (date < article_timestamp) and (entry.title not in titles):
             titles.append(entry.title)
 
             # get picture

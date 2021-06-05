@@ -6,7 +6,7 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help", help="Affiche la commande help")
+    @commands.command(name="help", usage="help", help="Affiche la commande help")
     async def help(self, ctx, *input):
         if not input:
             emb = discord.Embed(title='Commandes', color=DEFAULT_COLOR,
