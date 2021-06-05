@@ -20,7 +20,7 @@ CSV_PARAM = "./param.csv"
 date = time.time()
 titles = []
 TEMP_IMG = "temp-image{}.jpg"
-PREFIX = ';'
+PREFIX = os.getenv("PREFIX")
 bot = commands.Bot(command_prefix=PREFIX, help_command=None)
 DEFAULT_COLOR = 0x2b41ff
 PARAM_CSV = []
