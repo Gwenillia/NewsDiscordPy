@@ -7,7 +7,8 @@ class AddRss(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="addRss", help='Permet d\'ajouter un flux RSS')
+    @commands.command(name="addRss", usage="addRss <nom du flux> <lien vers le flux> <#channel>",
+                      help='Permet d\'ajouter un flux RSS')
     async def add_rss(self, ctx, rules_name: str = None, flux_rss: str = None, channel: str = None):
 
         global date

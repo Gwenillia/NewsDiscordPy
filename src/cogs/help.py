@@ -35,7 +35,7 @@ class Help(commands.Cog):
 
                     for command in self.bot.get_cog(cog).get_commands():
                         if not command.hidden:
-                            emb.add_field(name=f'`{PREFIX}{command.name}`', value=command.help, inline=False)
+                            emb.add_field(name=f'`{PREFIX}{command.usage}`', value=command.help, inline=False)
                     break
 
                 else:
