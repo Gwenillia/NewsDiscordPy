@@ -4,6 +4,7 @@ import time
 import pytz
 from discord.ext import commands
 from dotenv import load_dotenv
+from selenium.webdriver.firefox.options import Options
 
 load_dotenv()
 
@@ -14,6 +15,7 @@ COGS = [
     'cogs.flux.del_rss',
     'cogs.flux.flux',
     'cogs.flux.reload',
+    'cogs.check_price'
 ]
 
 CSV_PARAM = "./param.csv"
@@ -23,6 +25,7 @@ TEMP_IMG = "temp-image{}.jpg"
 PREFIX = os.getenv("PREFIX")
 bot = commands.Bot(command_prefix=PREFIX, help_command=None)
 DEFAULT_COLOR = 0x2b41ff
+FIREFOX_HEADER_OPTIONS = Options()
 PARAM_CSV = []
 FIELD_NAMES = []
 TZINFOS = {
