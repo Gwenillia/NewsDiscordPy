@@ -37,6 +37,7 @@ async def on_ready():
     feed_multi_news_rss.start(bot)
     print(f'{bot.user.name} is running on {len(bot.guilds)} guild')
 
+
 @bot.event
 async def on_guild_join(guild):
     prefix = ";"
@@ -49,6 +50,24 @@ async def on_guild_join(guild):
             )''', (guild.id, prefix, guild.id, prefix))
 
     db.commit()
+
+
+@bot.event
+async def on_message(message):
+    try:
+        prefix = await get_prefix(bot, message)
+    except TypeError:
+        # check if guild is already saved in db and add it or not
+        prefix = ";"
+    c.execute('''
+            INSERT INTO guild (guild_id, prefix)
+            SELECT ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1 FROM guild WHERE guild_id=? AND prefix=?
+                )''', (message.guild.id, prefix, message.guild.id, prefix))
+
+    db.commit()
+    await bot.process_commands(message)
 
 
 if __name__ == '__main__':
