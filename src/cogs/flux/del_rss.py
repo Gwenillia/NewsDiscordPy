@@ -11,16 +11,23 @@ class DelRss(commands.Cog):
             await send_embed(ctx, discord.Embed(description='Il manque des arguments. Commande **help**  :sweat_smile:',
                                                 color=DEFAULT_COLOR))
             return
-        try:
-            if not delete_row(rules_name):
-                await send_embed(ctx, discord.Embed(
-                    description=f'Le flux de news : **{rules_name}** n\'a pu être supprimé ! :sweat_smile:'))
+        else:
+            flux = c.execute('''
+                SELECT * FROM flux WHERE flux_name = ? AND guild_id = ?
+            ''', (rules_name, ctx.message.guild.id))
+            flux_bool = flux.fetchall()
+
+            if flux_bool:
+                c.execute('''
+                    DELETE FROM flux WHERE guild_id = ? AND flux_name = ?
+                ''', (ctx.message.guild.id, rules_name))
+                db.commit()
+                await send_embed(ctx, discord.Embed(description=f'Le flux **{rules_name}** a bien été supprimé :100:',
+                                                    color=DEFAULT_COLOR))
                 return
-            await send_embed(ctx, discord.Embed(
-                description=f'Le flux de news : **{rules_name}** a correctement été supprimé ! :100:'))
-        except ValueError:
-            await send_embed(ctx, discord.Embed(
-                description='Une erreur s\'est produite lors de la suppression du flux rss. Désolé :sob:'))
+            else:
+                await send_embed(ctx, discord.Embed(
+                    description=f"Il n'existe pas de flux **{rules_name}** sur le serveur :sob:", color=DEFAULT_COLOR))
 
 
 def setup(bot):

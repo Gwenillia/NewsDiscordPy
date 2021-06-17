@@ -18,7 +18,7 @@ class CheckPrice(commands.Cog):
                       help="Donne une liste pour trouver un jeux au prix les plus bas")
     async def check_price(self, ctx, *args):
         if args is None:
-            await ctx.author.send('Tu dois préciser le nom d\'un jeux')
+            await ctx.send('Tu dois préciser le nom d\'un jeux')
             return
 
         async with ctx.typing():

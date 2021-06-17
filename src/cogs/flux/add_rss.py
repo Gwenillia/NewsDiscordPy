@@ -4,6 +4,7 @@ from defs import *
 
 
 class AddRss(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -41,22 +42,30 @@ class AddRss(commands.Cog):
         elif len(feedparser.parse(flux_rss).entries) == 0:
             emb = discord.Embed(description=f'Ton flux rss **{flux_rss}** ne retourne rien. :sweat_smile:',
                                 color=DEFAULT_COLOR)
+
         else:
-            row_contents = {
-                "fluxrss": flux_rss,
-                "name": rules_name,
-                "channel": channel_id
-            }
-            try:
-                PARAM_CSV.append(row_contents)
-                write_param_csv()
-                emb = discord.Embed(description=f'Le flux de news : **{rules_name}** a correctement été ajouté ! :100:',
-                                    color=DEFAULT_COLOR)
-            except ValueError:
-                PARAM_CSV.remove(row_contents)
+            # connect to db
+            flux = c.execute('''
+                SELECT * FROM flux WHERE url = ? AND flux_name = ? AND CHANNEL = ?
+            ''', (flux_rss, rules_name, channel))
+
+            flux_bool = flux.fetchall()
+
+            if flux_bool:
                 emb = discord.Embed(
-                    description='Une erreur s\'est produite lors de la sauvegarde du flux rss. Désolé :sob:',
+                    description=f'Le flux **{rules_name}** est déjà présent ! va voir dans **{channel}**',
                     color=DEFAULT_COLOR)
+                await send_embed(ctx, emb)
+                return
+
+            else:
+                c.execute('''
+                    REPLACE INTO flux (guild_id, url, flux_name, channel)
+                    VALUES (?, ?, ?, ?)
+                    ''', (ctx.message.guild.id, flux_rss, rules_name, channel))
+                db.commit()
+                emb = discord.Embed(description=f'Ton flux rss **{flux_rss}** a bien été ajouté :100:',
+                                    color=DEFAULT_COLOR)
 
         await send_embed(ctx, emb)
 
