@@ -1,5 +1,4 @@
 import asyncio
-import csv
 import re
 import urllib.request
 import uuid
@@ -17,21 +16,12 @@ from discord.ext import tasks
 from consts import *
 
 
-def load_param_csv():
-    try:
-        with open(CSV_PARAM, 'r') as read_file:
-            PARAM_CSV.clear()
-            reader = csv.DictReader(read_file)
-            FIELD_NAMES.clear()
-            FIELD_NAMES.extend(reader.fieldnames)
-            for row in reader:
-                PARAM_CSV.append(row)
-
-            print("CSV Files has been loaded correctly")
-        return
-    except ValueError:
-        pass
-    raise ValueError('Impossible de lire le fichier csv {}'.format(CSV_PARAM))
+async def load_flux():
+    req = c.execute('''
+        SELECT * FROM flux
+    ''')
+    all_fluxs = req.fetchall()
+    return all_fluxs
 
 
 @tasks.loop(seconds=10)
@@ -41,10 +31,11 @@ async def feed_multi_news_rss(self):
     if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
         date = time.time()
         titles = []
-        load_param_csv()
+        await load_flux()
+
     functions = []
-    for row in PARAM_CSV:
-        function = asyncio.create_task(feed_news_rss(row))
+    for flux in await load_flux():
+        function = asyncio.create_task(feed_news_rss(flux))
         functions.append(function)
     await asyncio.gather(*functions)
 
@@ -52,7 +43,7 @@ async def feed_multi_news_rss(self):
 async def feed_news_rss(row):
     await asyncio.sleep(1)
 
-    news_feed = feedparser.parse(row["fluxrss"])
+    news_feed = feedparser.parse(row[2])
     for entry in reversed(news_feed.entries):
         uid = uuid.uuid1()
         temp_image = TEMP_IMG.format(str(uid))
@@ -103,11 +94,15 @@ async def feed_news_rss(row):
             hex_int_color = int(hex_string_color, 16)
 
             # get channel
-            channel = bot.get_channel(int(row["channel"]))
+            channel_id = re.sub("[<#>]", "", row[4])
+            channel = bot.get_channel(int(channel_id))
 
             # delete flux if channel don't exist
             if channel is None:
-                delete_row(row["name"])
+                c.execute('''
+                    DELETE FROM flux where channel = ? 
+                ''', (row[4],))
+                db.commit()
                 return
 
             # set summary
@@ -115,38 +110,12 @@ async def feed_news_rss(row):
 
             # set embed
             e = discord.Embed(title=entry.title, url=entry.link, description=summary, color=hex_int_color)
-            e.set_author(name=row["name"])
+            e.set_author(name=row[3])
             e.set_footer(text=article_short_date)
             file = discord.File(temp_image, filename=temp_image)
             e.set_image(url="attachment://" + temp_image)
             await channel.send(file=file, embed=e)
             os.remove(temp_image)
-
-
-def delete_row(rules_name):
-    line_deleted = None
-    result = False
-
-    for param in PARAM_CSV:
-        if rules_name == param["name"]:
-            line_deleted = param
-
-    if line_deleted is not None:
-        PARAM_CSV.remove(line_deleted)
-        write_param_csv()
-        result = True
-
-    return result
-
-
-def write_param_csv():
-    with open(CSV_PARAM, 'w', newline='') as write_file:
-        # Create a writer object from csv module
-        writer = csv.DictWriter(write_file, fieldnames=FIELD_NAMES)
-        # Add fieldnames as header
-        writer.writeheader()
-        # Add contents of list as last row in the csv file
-        writer.writerows(PARAM_CSV)
 
 
 async def send_embed(ctx, embed):

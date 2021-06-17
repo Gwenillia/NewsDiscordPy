@@ -10,7 +10,7 @@ class Help(commands.Cog):
     async def help(self, ctx, *input):
         if not input:
             emb = discord.Embed(title='Commandes', color=DEFAULT_COLOR,
-                                description=f'Utilises `{PREFIX}help <commande>` pour avoir plus d\'informations sur une commande :relieved:\n')
+                                description=f'Utilises `{await get_prefix(bot, ctx)}help <commande>` pour avoir plus d\'informations sur une commande :relieved:\n')
 
             cogs_desc = ''
             for cog in self.bot.cogs:
@@ -35,7 +35,7 @@ class Help(commands.Cog):
 
                     for command in self.bot.get_cog(cog).get_commands():
                         if not command.hidden:
-                            emb.add_field(name=f'`{PREFIX}{command.usage}`', value=command.help, inline=False)
+                            emb.add_field(name=f'`{await get_prefix(bot, ctx)}{command.usage}`', value=command.help, inline=False)
                     break
 
                 else:
