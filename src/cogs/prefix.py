@@ -15,8 +15,8 @@ class Prefix(commands.Cog):
         c.execute('''
             UPDATE guild SET prefix = ? WHERE guild_id = ?
         ''', (new_prefix, ctx.message.guild.id))
-        await ctx.send(f'Le prefix a bien été changé pour {new_prefix}')
         db.commit()
+        await ctx.send(f'Le prefix a bien été changé pour {new_prefix}')
 
 
 def setup(bot):
