@@ -15,7 +15,6 @@ from discord.ext import tasks
 
 from consts import *
 
-
 async def load_flux():
     req = c.execute('''
         SELECT * FROM flux
@@ -28,21 +27,15 @@ async def load_flux():
 async def feed_multi_news_rss(self):
     global date
     global titles
-    if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
-        date = time.time()
-        titles = []
-        await load_flux()
+    # if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
+    #     date = time.time()
+    #     titles = []
 
-    functions = []
-    for flux in await load_flux():
-        function = asyncio.create_task(feed_news_rss(flux))
-        functions.append(function)
+    functions = [feed_news_rss(flux) for flux in await load_flux()]
     await asyncio.gather(*functions)
-
+ 
 
 async def feed_news_rss(row):
-    await asyncio.sleep(1)
-
     news_feed = feedparser.parse(row[2])
     for entry in reversed(news_feed.entries):
         uid = uuid.uuid1()
