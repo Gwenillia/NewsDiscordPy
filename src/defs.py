@@ -27,9 +27,9 @@ async def load_flux():
 async def feed_multi_news_rss(self):
     global date
     global titles
-    # if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
-    #     date = time.time()
-    #     titles = []
+    if datetime.fromtimestamp(time.time()).day != datetime.fromtimestamp(date).day:
+        date = time.time()
+        titles = []
 
     functions = [feed_news_rss(flux) for flux in await load_flux()]
     await asyncio.gather(*functions)
