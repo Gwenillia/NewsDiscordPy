@@ -58,7 +58,7 @@ class CheckPrice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="checkPrice", usage="checkPriceTest <nom d'un jeux>",
+    @commands.command(name="checkPrice", usage="checkPrice <nom d'un jeux>",
                       help="Donne une liste pour trouver un jeux au prix les plus bas")
     async def check_price(self, ctx, *args):
         if len(args) < 1:
