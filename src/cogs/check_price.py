@@ -1,87 +1,86 @@
-import os
-import uuid
+import json
+from urllib.parse import urljoin, urlparse
 
-import discord
-import selenium.common.exceptions
+import requests
+
 from defs import *
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 
-class CheckPrice(commands.Cog):
+def get_input_game_id(input_game):
+    req = requests.get('https://www.allkeyshop.com/api/v2/vaks.php?action=gameNames&currency=eur')
+    res = json.loads(req.text)
+    for item in res['games']:
+        if input_game in item['name'].lower():
+            input_game_id = item['id']
+            return input_game_id, item['name']
+
+
+def get_game_data(input_game_id):
+    req = requests.get(f'https://www.allkeyshop.com/blog/wp-admin/admin-ajax.php?action=get_offers&product='
+                       f'{input_game_id}&currency=eur&region=&moreq=&use_beta_offers_display=1')
+    res = json.loads(req.text)
+    print(res.keys())
+    offers = []
+    for item in res['offers'][:5]:
+        # price
+        price = item['price']['eur']['priceWithoutCoupon']
+        # edition
+        edition_id = item['edition']
+        edition_name = res['editions'][edition_id]['name']
+        # merchant
+        merchant_id = item['merchant']
+        merchant_name = res['merchants'][merchant_id]['name']
+        # region
+        region_id = item['region']
+        region_name = res['regions'][region_id]['name']
+        # platform
+        platform = item['platform']
+        # url
+        affiliate_url = item['affiliateUrl']
+        url = urljoin(affiliate_url, urlparse(affiliate_url).path)
+
+        offer = Offer(price, edition_name, merchant_name, region_name, platform, url)
+        offers.append(offer)
+    return offers
+
+
+class Offer:
+    def __init__(self, price, edition_name, merchant_name, region_name, platform, url):
+        self.price = price
+        self.edition = edition_name
+        self.merchant = merchant_name
+        self.region = region_name
+        self.platform = platform
+        self.url = url
+
+
+class CheckPriceTest(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="checkPrice", usage="checkPrice <nom d'un jeux>",
+    @commands.command(name="checkPriceTest", usage="checkPriceTest <nom d'un jeux>",
                       help="Donne une liste pour trouver un jeux au prix les plus bas")
     async def check_price(self, ctx, *args):
-        if args is None:
+        if len(args) < 1:
             await ctx.send('Tu dois préciser le nom d\'un jeux')
             return
 
         async with ctx.typing():
-            uid = uuid.uuid1()
-            FIREFOX_HEADER_OPTIONS.headless = True
-            driver = webdriver.Firefox(options=FIREFOX_HEADER_OPTIONS)
-            wait = WebDriverWait(driver, 10)
-            scrapped_link = "https://www.goclecd.fr/"
-            driver.get(scrapped_link)
-            # next line need fix
-            try:
-                wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'banner-search-form-input')))
-            except selenium.common.exceptions.TimeoutException as ex:
-                await ctx.send(
-                    "Tiens, le site que j'utilise a totalement changé, désolée mais je dois subir une màj :sweat_smile:")
-            search_input = driver.find_element_by_class_name("banner-search-form-input")
-            search_input.clear()
-            search_input.send_keys("+".join(args))
-
-            # next line need fix
-            try:
-                wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'ls-results-row-image')))
-            except selenium.common.exceptions.TimeoutException as ex:
-                await ctx.send("y'a R frèr")
-                return
-
-            first_result = driver.find_element_by_css_selector(".ls-results-row-image:first-of-type")
-
-            first_result.click()
-
-            wait.until(EC.presence_of_element_located((By.ID, 'offer_offer')))
-
-            url = driver.current_url
-
-            driver.execute_script("""
-                let a = document.getElementById('offers_table');
-                for(i = a.children.length; i > 6; i--) {
-                    a.lastChild.remove();
-                };
-                let style = `
-                    <style>
-                        .metacritic-button { display: none; }
-                        .buy-btn-cell { display: none; }
-                    </style>
-                `
-                document.head.insertAdjacentHTML("beforeend", style);
-            """)
-
-            list = driver.find_element_by_id('offers_table')
-
-            try:
-                with open(f"temp_list_image-{uid}.png", "wb") as temp_list_img:
-                    temp_list_img.write(list.screenshot_as_png)
-            except Exception:
-                print('Can\'t save image')
-
-        e = discord.Embed(title="Voici ce que j'ai trouvé !", url=url, color=DEFAULT_COLOR)
-        file = discord.File(temp_list_img.name, filename=temp_list_img.name)
-        e.set_image(url="attachment://" + temp_list_img.name)
-        await ctx.send(file=file, embed=e)
-        os.remove(temp_list_img.name)
-        driver.close()
+            input_game = ' '.join(args).lower()
+            game = get_input_game_id(input_game)
+            game_id = game[0]
+            game_name = game[1]
+            game_data = get_game_data(game_id)
+            emb = discord.Embed(
+                title=f'{game_name} :100:',
+                color=DEFAULT_COLOR
+            )
+            for item in game_data:
+                emb.add_field(name="————————————————————",
+                              value=f'Boutique: [**{item.merchant}**]({item.url}) \nPrix: **{item.price}€** \nÉdition: **{item.edition}** \nActivable uniquement sur **{item.platform}** en **{item.region}**',
+                              inline=False)
+        await send_embed(ctx, emb)
 
 
 def setup(bot):
-    bot.add_cog(CheckPrice(bot))
+    bot.add_cog(CheckPriceTest(bot))
