@@ -19,7 +19,6 @@ def get_game_data(input_game_id):
     req = requests.get(f'https://www.allkeyshop.com/blog/wp-admin/admin-ajax.php?action=get_offers&product='
                        f'{input_game_id}&currency=eur&region=&moreq=&use_beta_offers_display=1')
     res = json.loads(req.text)
-    print(res.keys())
     offers = []
     for item in res['offers'][:5]:
         # price
