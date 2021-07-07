@@ -54,11 +54,11 @@ class Offer:
         self.url = url
 
 
-class CheckPriceTest(commands.Cog):
+class CheckPrice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="checkPriceTest", usage="checkPriceTest <nom d'un jeux>",
+    @commands.command(name="checkPrice", usage="checkPriceTest <nom d'un jeux>",
                       help="Donne une liste pour trouver un jeux au prix les plus bas")
     async def check_price(self, ctx, *args):
         if len(args) < 1:
@@ -83,4 +83,4 @@ class CheckPriceTest(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(CheckPriceTest(bot))
+    bot.add_cog(CheckPrice(bot))
