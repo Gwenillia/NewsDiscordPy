@@ -5,7 +5,6 @@ import time
 import pytz
 from discord.ext import commands
 from dotenv import load_dotenv
-from selenium.webdriver.firefox.options import Options
 
 load_dotenv()
 
@@ -41,10 +40,9 @@ async def get_prefix(bot, message):
     return prefix
 
 
-bot = commands.Bot(command_prefix=get_prefix, help_command=None)
+bot = commands.Bot(command_prefix=get_prefix, help_command=None, case_insensitive=True)
 
 DEFAULT_COLOR = 0x2b41ff
-FIREFOX_HEADER_OPTIONS = Options()
 FIELD_NAMES = []
 TZINFOS = {
     'PDT': pytz.timezone('US/Pacific'),
