@@ -5,7 +5,7 @@ class DelRss(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="delRss", usage="delRss <nom du flux>", help='Permet de supprimer un flux RSS')
+    @commands.command(name="delRss", aliases=['dr'], usage="delRss <nom du flux>", help='Permet de supprimer un flux RSS')
     async def del_rss(self, ctx, rules_name: str = None):
         if rules_name is None:
             await send_embed(ctx, discord.Embed(description='Il manque des arguments. Commande **help**  :sweat_smile:',

@@ -6,7 +6,7 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="help", usage="help", help="Affiche la commande help")
+    @commands.command(name="help", aliases=['h'], usage="help", help="Affiche la commande help")
     async def help(self, ctx, *input):
         if not input:
             emb = discord.Embed(title='Commandes', color=DEFAULT_COLOR,
@@ -16,7 +16,11 @@ class Help(commands.Cog):
             for cog in self.bot.cogs:
 
                 for command in self.bot.get_cog(cog).get_commands():
-                    cogs_desc += f'`{command.name.partition(" ")[0]}`\n'
+                    cogs_desc += f'`{command.name.partition(" ")[0]}`'
+                    if command.aliases:
+                        cogs_desc += f'/`{"/ ".join(command.aliases)}`\n'
+                    else:
+                        cogs_desc += f'\n'
 
             emb.add_field(name='Commandes', value=cogs_desc, inline=False)
 

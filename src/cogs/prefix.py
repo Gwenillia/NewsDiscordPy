@@ -6,7 +6,7 @@ class Prefix(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='prefix', help="Change le prefix du bot sur le serveur", usage="prefix <nouveau prefix>")
+    @commands.command(name='prefix', aliases=['pre'], help="Change le prefix du bot sur le serveur", usage="prefix <nouveau prefix>")
     async def prefix(self, ctx, new_prefix: str = None):
         if new_prefix is None:
             await ctx.send("Tu dois préciser un prefix pour que je puisse le changer :relieved:")

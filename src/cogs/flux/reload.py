@@ -5,7 +5,7 @@ class Reload(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="reload", usage="reload", help="Recharge les flux en mémoire")
+    @commands.command(name="reload", aliases=['r'], usage="reload", help="Recharge les flux en mémoire")
     async def reload(self, ctx):
         try:
             load_param_csv()
