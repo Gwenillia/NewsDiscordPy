@@ -1,5 +1,7 @@
-from defs import *
-
+from discord.ext import commands
+from src.defs import send_embed
+import discord
+from src.consts import DEFAULT_COLOR, c
 
 class Flux(commands.Cog):
 

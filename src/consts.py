@@ -12,33 +12,30 @@ db = sqlite3.connect("arca_news.sqlite")
 c = db.cursor()
 
 COGS = [
-    'cogs.help',
-    'cogs.ping',
-    'cogs.flux.add_rss',
-    'cogs.flux.del_rss',
-    'cogs.flux.flux',
-    'cogs.flux.reload',
-    'cogs.check_price',
-    'cogs.prefix'
+    'src.cogs.help',
+    'src.cogs.ping',
+    'src.cogs.flux.add_rss',
+    'src.cogs.flux.del_rss',
+    'src.cogs.flux.flux',
+    'src.cogs.check_price',
+    'src.cogs.prefix'
 ]
 
 date = time.time()
 titles = []
 TEMP_IMG = "temp-image{}.jpg"
 
-
 async def get_prefix(bot, message):
     req = c.execute('''
             SELECT prefix FROM guild WHERE guild_id = ?
         ''', (message.guild.id,))
     prefix = req.fetchone()[0]
-    if prefix is None:  # TODO: set default prefix
+    if prefix is None:
         c.execute('''
             UPDATE guild SET prefix = ";" WHERE guild_id = ?
         ''', (message.guild.id,))
 
     return prefix
-
 
 bot = commands.Bot(command_prefix=get_prefix, help_command=None, case_insensitive=True)
 
