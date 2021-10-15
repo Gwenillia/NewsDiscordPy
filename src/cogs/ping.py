@@ -1,5 +1,7 @@
-from defs import *
-
+from discord.ext import commands
+import discord
+from src.defs import send_embed
+from src.consts import DEFAULT_COLOR
 
 class Ping(commands.Cog):
     def __init__(self, bot):
