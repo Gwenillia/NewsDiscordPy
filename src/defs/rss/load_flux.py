@@ -1,8 +1,6 @@
-from src.consts import c
-
-async def load_flux():
-  req = c.execute('''
+async def load_flux(bot):
+  req = await bot.db.fetch('''
       SELECT * FROM flux
   ''')
-  all_flux = req.fetchall()
+  all_flux = req
   return all_flux

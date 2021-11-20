@@ -1,8 +1,10 @@
 import json
 from urllib.parse import urljoin, urlparse
+
+import discord
 import requests
 from discord.ext import commands
-import discord
+
 from src.consts import DEFAULT_COLOR
 from src.defs import send_embed
 
@@ -22,25 +24,29 @@ def get_game_data(input_game_id):
   res = json.loads(req.text)
   offers = []
   for item in res['offers'][:5]:
-    # price
-    price = item['price']['eur']['priceWithoutCoupon']
-    # edition
-    edition_id = item['edition']
-    edition_name = res['editions'][edition_id]['name']
     # merchant
     merchant_id = item['merchant']
     merchant_name = res['merchants'][merchant_id]['name']
-    # region
-    region_id = item['region']
-    region_name = res['regions'][region_id]['name']
-    # platform
-    platform = item['platform']
-    # url
-    affiliate_url = item['affiliateUrl']
-    url = urljoin(affiliate_url, urlparse(affiliate_url).path)
 
-    offer = Offer(price, edition_name, merchant_name, region_name, platform, url)
-    offers.append(offer)
+    if "microsoft" in merchant_name.lower():
+      pass
+    else:
+      # price
+      price = item['price']['eur']['priceWithoutCoupon']
+      # edition
+      edition_id = item['edition']
+      edition_name = res['editions'][edition_id]['name']
+      # region
+      region_id = item['region']
+      region_name = res['regions'][region_id]['name']
+      # platform
+      platform = item['platform']
+      # url
+      affiliate_url = item['affiliateUrl']
+      url = urljoin(affiliate_url, urlparse(affiliate_url).path)
+
+      offer = Offer(price, edition_name, merchant_name, region_name, platform, url)
+      offers.append(offer)
   return offers
 
 

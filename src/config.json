@@ -1,0 +1,7 @@
+{
+  "bot_token": "XXXX",
+  "postgresql_user": "XXXX",
+  "postgresql_password": "XXXX",
+  "min_message_xp": 10,
+  "max_message_xp": 30
+}
