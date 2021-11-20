@@ -1,6 +1,8 @@
 from discord.ext import commands
 import discord
-from src.consts import DEFAULT_COLOR, get_prefix, bot
+
+from src.defs.get_prefix import get_prefix
+from src.consts import DEFAULT_COLOR
 from src.defs import send_embed
 
 
@@ -13,7 +15,7 @@ class Help(commands.Cog):
   async def help(self, ctx, *input):
     if not input:
       emb = discord.Embed(title='Commandes', color=DEFAULT_COLOR,
-                          description=f'Utilises `{await get_prefix(bot, ctx)}help <commande>` pour avoir plus d\'informations sur une commande :relieved:\n')
+                          description=f'Utilises `{await get_prefix(self.bot, ctx)}help <commande>` pour avoir plus d\'informations sur une commande :relieved:\n')
 
       cogs_desc = ''
       for cog in self.bot.cogs:
@@ -42,7 +44,7 @@ class Help(commands.Cog):
 
           for command in self.bot.get_cog(cog).get_commands():
             if not command.hidden:
-              emb.add_field(name=f'`{await get_prefix(bot, ctx)}{command.usage}`', value=command.help, inline=False)
+              emb.add_field(name=f'`{await get_prefix(self.bot, ctx)}{command.usage}`', value=command.help, inline=False)
           break
 
         else:

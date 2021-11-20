@@ -1,23 +1,30 @@
+import json
 import ssl
 import time
-from discord.ext import commands
-from src.defs import send_embed
+
 import discord
-from src.consts import DEFAULT_COLOR, bot, c, db
-import src.consts as consts
-import re
 import feedparser
+from discord.ext import commands
+
+import src.consts as consts
+from src.config import Config
+from src.consts import DEFAULT_COLOR
+from src.database import Database
+from src.defs import send_embed
 
 
 class AddRss(commands.Cog):
-
   def __init__(self, bot):
+
+    with open('src/config.json', 'r') as f:
+      self.cfg = Config(json.loads(f.read()))
+
     self.bot = bot
+    self.db = Database(self.bot.loop, self.cfg.postgresql_user, self.cfg.postgresql_password)
 
   @commands.command(name="addRss", aliases=["ar"], usage="addRss <nom du flux> <lien vers le flux> <#channel>",
                     help='Permet d\'ajouter un flux RSS')
   @commands.has_permissions(manage_channels=True)
-  @commands.bot_has_permissions(manage_channels=True)
   async def add_rss(self, ctx, rules_name, flux_rss, channel):
 
     consts.date = time.time()
@@ -36,41 +43,37 @@ class AddRss(commands.Cog):
                          description=f'Un problème est survenue avec le channel **{channel}**. :sob:',
                          color=DEFAULT_COLOR))
       return
-    if not re.fullmatch(".*[a-zA-Z0-9]", rules_name):
-      emb = discord.Embed(
-        description=f'Tu as mis des caractères spéciaux dans le nom : **{rules_name}**. :sweat_smile:',
-        color=DEFAULT_COLOR)
-    elif bot.get_channel(channel_id) is None:
-      emb = discord.Embed(description='Tu as mis un **channel non valide**. :sweat_smile:', color=DEFAULT_COLOR)
-    elif len(feedparser.parse(flux_rss).entries) == 0:
+    if len(feedparser.parse(flux_rss).entries) == 0:
       emb = discord.Embed(description=f'Ton flux rss **{flux_rss}** ne retourne rien. :sweat_smile:',
                           color=DEFAULT_COLOR)
 
     else:
-      # connect to db
-      flux = c.execute('''
-                SELECT * FROM flux WHERE url = ? AND flux_name = ? AND CHANNEL = ?
-            ''', (flux_rss, rules_name, channel))
+      try:
+        req = await self.db.fetch(
+          'SELECT EXISTS(SELECT 1 FROM flux WHERE url = $1 AND flux_name = $2 AND discord_channel_id = $3)',
+          flux_rss, rules_name, channel_id)
+        res = req[0][0]
+      except AttributeError:
+        print('error: {0}'.format(AttributeError.args))
 
-      flux_bool = flux.fetchall()
-
-      if flux_bool:
+      if res is True:
         emb = discord.Embed(
           description=f'Le flux **{rules_name}** est déjà présent ! va voir dans **{channel}**',
           color=DEFAULT_COLOR)
-        await send_embed(ctx, emb)
         return
 
       else:
-        c.execute('''
-                    REPLACE INTO flux (guild_id, url, flux_name, channel)
-                    VALUES (?, ?, ?, ?)
-                    ''', (ctx.message.guild.id, flux_rss, rules_name, channel))
-        db.commit()
+        try:
+          await self.db.execute(
+            'INSERT INTO flux (GUILD_ID, url, flux_name, discord_channel_id) SELECT ID, $1, $2, $3 FROM guild WHERE discord_guild_id = $4',
+            flux_rss, rules_name, channel_id, ctx.guild.id)
+        except Exception as ex:
+          print('error {0}:{1!r}'.format(type(ex).__name__, ex.args))
+
         emb = discord.Embed(description=f'Ton flux rss **{flux_rss}** a bien été ajouté :100:',
                             color=DEFAULT_COLOR)
 
-    await send_embed(ctx, emb)
+      await send_embed(ctx, emb)
 
   @add_rss.error
   async def handle_error(self, ctx, error):

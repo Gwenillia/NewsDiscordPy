@@ -1,81 +1,67 @@
-#!/usr/bin/python3
+import json
+import logging
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
+
+from src.config import Config
+from src.database import Database
+from src.defs.get_prefix import get_prefix
 from src.defs.rss import feed_multi_news_rss
-from src.consts import bot, c, COGS, db, TOKEN, get_prefix
 
 
-@bot.event
-async def on_ready():
-  # create tables
-  c.execute('''
-    CREATE TABLE IF NOT EXISTS guild
-    (
-      ID INTEGER PRIMARY KEY NOT NULL,
-      guild_id INTEGER NOT NULL,
-      prefix VARCHAR(3) NOT NULL
+class Bot(commands.Bot):
+  def __init__(self):
+    super().__init__(
+      command_prefix=get_prefix,
+      help_command=None,
+      case_insensitive=True
     )
-  ''')
-  c.execute('''
-    CREATE TABLE IF NOT EXISTS flux
-    (
-      ID INTEGER PRIMARY KEY NOT NULL,
-      guild_id INTEGER NOT NULL REFERENCES guild(ID),
-      url VARCHAR(2083) NOT NULL,
-      flux_name VARCHAR(40) NOT NULL,
-      channel INT NOT NULL,
-      UNIQUE (url, flux_name, channel)
-    )
-  ''')
 
-  for cog in COGS:
-    try:
-      bot.load_extension(cog)
-    except (ModuleNotFoundError, commands.ExtensionNotFound)  as ex:
-      template = "Unable to load {0}.\n{1}:{2!r}"
-      message = template.format(cog, type(ex).__name__, ex.args)
-      print(message)
-    else:
-      print(f'{cog}Extensions loaded')
+    logger = logging.getLogger('discord')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    logger.addHandler(handler)
 
-  await bot.change_presence(
-    activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
-  feed_multi_news_rss.start(bot)
-  print(f'{bot.user.name} is running on {len(bot.guilds)} guild')
+    with open('src/config.json', 'r') as f:
+      self.cfg = Config(json.loads(f.read()))
 
+    self.db = Database(self.loop, self.cfg.postgresql_user, self.cfg.postgresql_password)
 
-@bot.event
-async def on_guild_join(guild):
-  prefix = ";"
-  # check if guild is already saved in db and add it or not
-  c.execute('''
-        INSERT INTO guild (guild_id, prefix)
-        SELECT ?, ?
-        WHERE NOT EXISTS (
-            SELECT 1 FROM guild WHERE guild_id=? AND prefix=?
-            )''', (guild.id, prefix, guild.id, prefix))
+    self.cog_list = [
+      'src.cogs.help',
+      'src.cogs.ping',
+      'src.cogs.flux.add_rss',
+      'src.cogs.flux.del_rss',
+      'src.cogs.flux.flux',
+      'src.cogs.check_price',
+      'src.cogs.prefix',
+      'src.cogs.ranking'
+    ]
 
-  db.commit()
+    for cog in self.cog_list:
+      try:
+        self.load_extension(cog)
+        print("Cog {0} has been loaded !".format(cog))
+      except (ModuleNotFoundError, commands.ExtensionNotFound) as ex:
+        print("Unable to load {0}.\n{1}:{2!r}".format(cog, type(ex).__name__, ex.args))
 
+  async def on_ready(self):
+    feed_multi_news_rss.start(self)
+    print("{0} is running on {1} guilds".format(self.user.name, len(self.guilds)))
+    await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="les actualités"))
 
-@bot.event
-async def on_message(message):
-  try:
-    prefix = await get_prefix(bot, message)
-  except TypeError:
-    # check if guild is already saved in db and add it or not
-    prefix = ";"
-  c.execute('''
-            INSERT INTO guild (guild_id, prefix)
-            SELECT ?, ?
-            WHERE NOT EXISTS (
-                SELECT 1 FROM guild WHERE guild_id=? AND prefix=?
-                )''', (message.guild.id, prefix, message.guild.id, prefix))
+  async def on_guild_join(self, guild):
+    await self.db.execute('INSERT INTO guild (discord_guild_id, prefix) SELECT $1, $2 ON CONFLICT DO NOTHING', guild.id,
+                          ';')
 
-  db.commit()
-  await bot.process_commands(message)
+  async def on_message(self, message):
+    await self.process_commands(message)
+
+  def startup(self):
+    self.run(self.cfg.bot_token, bot=True, reconnect=True)
 
 
 if __name__ == '__main__':
-  bot.run(TOKEN, bot=True, reconnect=True)
+  Bot().startup()

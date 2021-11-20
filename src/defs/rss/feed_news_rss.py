@@ -1,20 +1,22 @@
-import feedparser
-import uuid
-from src.consts import TEMP_IMG, date, TZINFOS, bot, c, db
-import src.consts as consts
-import dateutil.parser
-import pytz
-import time
-import re
-import urllib.request
-import skimage.io as io
-import numpy as np
-import cv2
-import discord
 import os
+import re
+import time
+import urllib.request
+import uuid
+
+import cv2
+import dateutil.parser
+import discord
+import feedparser
+import numpy as np
+import pytz
+import skimage.io as io
+
+import src.consts as consts
+from src.consts import TEMP_IMG, date, TZINFOS
 
 
-async def feed_news_rss(row):
+async def feed_news_rss(row, bot):
   news_feed = feedparser.parse(row[2])
   for entry in reversed(news_feed.entries):
     uid = uuid.uuid1()
@@ -28,9 +30,7 @@ async def feed_news_rss(row):
     article_short_date = time.strftime("%d/%m/%Y à %Hh%M", article_date_utc.timetuple())
     article_timestamp = time.mktime(article_date_utc.timetuple())
 
-    if (date > article_timestamp) and (entry.title in consts.titles):
-      pass
-    elif (date < article_timestamp) and (entry.title not in consts.titles):
+    if (date < article_timestamp) and (entry.title not in consts.titles):
       consts.titles.append(entry.title)
 
       # get picture
@@ -66,15 +66,13 @@ async def feed_news_rss(row):
       hex_int_color = int(hex_string_color, 16)
 
       # get channel
-      channel_id = re.sub("[<#>]", "", row[4])
+      channel_id = row[4]
       channel = bot.get_channel(int(channel_id))
-
       # delete flux if channel don't exist
       if channel is None:
-        c.execute('''
-                  DELETE FROM flux where channel = ? 
-              ''', (row[4],))
-        db.commit()
+        await bot.db.execute('''
+          DELETE FROM flux WHERE discord_channel_id = $1
+        ''', channel_id)
         return
 
       # set summary
